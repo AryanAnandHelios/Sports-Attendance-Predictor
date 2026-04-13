@@ -147,3 +147,67 @@ def plot_actual_vs_predicted(X_train, X_test, y_train, y_test):
     plt.savefig('results/actual_vs_predicted.png', dpi=150, bbox_inches='tight')
     print("Saved: results/actual_vs_predicted.png")
     plt.show()
+
+def plot_attendance_over_time(matches):
+    import matplotlib.pyplot as plt
+    
+    yearly_avg = matches.groupby('Year')['Attendance'].mean()
+    yearly_std = matches.groupby('Year')['Attendance'].std()
+    
+    fig, ax = plt.subplots(figsize=(12, 6))
+    
+    ax.plot(yearly_avg.index, yearly_avg.values, 'b-o', linewidth=2.5, markersize=8)
+    ax.fill_between(yearly_avg.index, 
+                    yearly_avg.values - yearly_std.values,
+                    yearly_avg.values + yearly_std.values,
+                    alpha=0.2, color='blue', label='±1 Std Dev')
+    
+    ax.set_xlabel('World Cup Year', fontsize=12)
+    ax.set_ylabel('Average Attendance', fontsize=12)
+    ax.set_title('FIFA World Cup Average Match Attendance Over Time\n1930 to 2014', 
+                 fontsize=14, fontweight='bold')
+    ax.grid(True, alpha=0.3)
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{int(x):,}'))
+    
+    # Annotate key tournaments
+    annotations = {1950: 'Brazil\n(Maracana)', 1994: 'USA\n(NFL Stadiums)', 2010: 'South Africa'}
+    for year, label in annotations.items():
+        if year in yearly_avg.index:
+            ax.annotate(label, xy=(year, yearly_avg[year]),
+                       xytext=(year, yearly_avg[year] + 8000),
+                       fontsize=8, ha='center',
+                       arrowprops=dict(arrowstyle='->', color='gray'))
+    
+    plt.tight_layout()
+    plt.savefig('results/attendance_over_time.png', dpi=150, bbox_inches='tight')
+    print("Saved: results/attendance_over_time.png")
+    plt.show()
+
+def plot_overfitting_gap(best_results):
+    import matplotlib.pyplot as plt
+    import numpy as np
+    
+    models = list(best_results.keys())
+    gaps = [best_results[m]['train_r2'] - best_results[m]['test_r2'] for m in models]
+    colors = ['steelblue' if g < 0.1 else 'tomato' for g in gaps]
+    
+    fig, ax = plt.subplots(figsize=(10, 6))
+    
+    bars = ax.bar(models, gaps, color=colors, edgecolor='white', linewidth=0.5)
+    
+    ax.axhline(y=0.1, color='gray', linestyle='--', linewidth=1.5, label='Acceptable gap threshold (0.1)')
+    ax.set_xlabel('Model', fontsize=12)
+    ax.set_ylabel('Train R² minus Test R²', fontsize=12)
+    ax.set_title('Overfitting Gap per Model\n(Lower = Better Generalization)', 
+                 fontsize=14, fontweight='bold')
+    ax.legend(fontsize=10)
+    ax.grid(True, alpha=0.3, axis='y')
+    
+    for bar, gap in zip(bars, gaps):
+        ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.003,
+                f'{gap:.3f}', ha='center', va='bottom', fontsize=10, fontweight='bold')
+    
+    plt.tight_layout()
+    plt.savefig('results/overfitting_gap.png', dpi=150, bbox_inches='tight')
+    print("Saved: results/overfitting_gap.png")
+    plt.show()
