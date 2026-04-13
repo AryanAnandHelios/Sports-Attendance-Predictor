@@ -78,3 +78,72 @@ def plot_best_models(best_results):
     plt.savefig('results/best_models.png', dpi=150, bbox_inches='tight')
     print("Saved: results/best_models.png")
     plt.show()
+
+def plot_feature_importance(X_train, y_train, feature_names):
+    from sklearn.linear_model import Lasso
+    import matplotlib.pyplot as plt
+    
+    model = Lasso(alpha=10000)
+    model.fit(X_train, y_train)
+    
+    coefficients = model.coef_
+    
+    fig, ax = plt.subplots(figsize=(10, 6))
+    
+    colors = ['tomato' if c < 0 else 'steelblue' for c in coefficients]
+    bars = ax.barh(feature_names, coefficients, color=colors)
+    
+    ax.axvline(x=0, color='black', linewidth=0.8)
+    ax.set_xlabel('Coefficient Value', fontsize=12)
+    ax.set_title('Lasso Feature Coefficients (alpha=10000)\nNon-zero = Feature Selected by Lasso', 
+                 fontsize=13, fontweight='bold')
+    ax.grid(True, alpha=0.3, axis='x')
+    
+    for bar, coef in zip(bars, coefficients):
+        if coef != 0:
+            ax.text(coef + (0.001 * max(abs(coefficients))), 
+                   bar.get_y() + bar.get_height()/2,
+                   f'{coef:.1f}', va='center', fontsize=9)
+    
+    plt.tight_layout()
+    plt.savefig('results/feature_importance.png', dpi=150, bbox_inches='tight')
+    print("Saved: results/feature_importance.png")
+    plt.show()
+
+def plot_actual_vs_predicted(X_train, X_test, y_train, y_test):
+    from sklearn.linear_model import Lasso
+    import matplotlib.pyplot as plt
+    import numpy as np
+    
+    model = Lasso(alpha=10000)
+    model.fit(X_train, y_train)
+    preds = model.predict(X_test)
+    
+    fig, ax = plt.subplots(figsize=(8, 8))
+    
+    ax.scatter(y_test, preds, alpha=0.6, color='steelblue', edgecolors='white', s=60)
+    
+    min_val = min(y_test.min(), preds.min())
+    max_val = max(y_test.max(), preds.max())
+    ax.plot([min_val, max_val], [min_val, max_val], 'r--', linewidth=2, label='Perfect Prediction')
+    
+    from sklearn.metrics import r2_score, mean_absolute_error
+    r2 = r2_score(y_test, preds)
+    mae = mean_absolute_error(y_test, preds)
+    
+    ax.text(0.05, 0.95, f'R² = {r2:.3f}\nMAE = {mae:.0f}',
+            transform=ax.transAxes, fontsize=12,
+            verticalalignment='top',
+            bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+    
+    ax.set_xlabel('Actual Attendance', fontsize=12)
+    ax.set_ylabel('Predicted Attendance', fontsize=12)
+    ax.set_title('Actual vs. Predicted Attendance\nBest Model: Lasso (alpha=10000)', 
+                 fontsize=13, fontweight='bold')
+    ax.legend(fontsize=10)
+    ax.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    plt.savefig('results/actual_vs_predicted.png', dpi=150, bbox_inches='tight')
+    print("Saved: results/actual_vs_predicted.png")
+    plt.show()
